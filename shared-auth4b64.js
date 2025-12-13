@@ -1,4 +1,4 @@
-// クロスサブドメインSSO用の共有認証マネージャー
+// Gerenciador de autenticação compartilhada para SSO entre subdomínios
 class SharedAuthManager {
     constructor() {
         this.domain = '.cupiditys.lol';
@@ -6,16 +6,16 @@ class SharedAuthManager {
         this.encryptionKey = this.generateKey();
     }
 
-    // シンプルなシフト値を生成（ドメインベース）
+    // Gerar valores de deslocamento simples (baseados em domínio）
     generateKey() {
         return window.location.hostname.split('.').slice(1,3).join('').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 25 + 1;
     }
 
-    // シンプルなシーザー暗号による難読化
+    // Ofuscação com uma cifra simples de César
     obfuscate(str) {
         return str.split('').map(char => {
             const code = char.charCodeAt(0);
-            // 印刷可能文字の範囲でシフト（32-126）
+            // Mudança dentro do intervalo de caracteres imprimíveis（32-126）
             if (code >= 32 && code <= 126) {
                 return String.fromCharCode(((code - 32 + this.encryptionKey) % 95) + 32);
             }
@@ -27,7 +27,7 @@ class SharedAuthManager {
         try {
             return str.split('').map(char => {
                 const code = char.charCodeAt(0);
-                // 印刷可能文字の範囲でシフトを戻す
+                // Retorna deslocamento dentro do intervalo de caracteres imprimíveis
                 if (code >= 32 && code <= 126) {
                     return String.fromCharCode(((code - 32 - this.encryptionKey + 95) % 95) + 32);
                 }
@@ -38,7 +38,7 @@ class SharedAuthManager {
         }
     }
 
-    // 古いXOR暗号の復号化（後方互換性のため）
+    // Descriptografando cifras XOR antigas (para compatibilidade com versões anteriores)
     oldDeobfuscate(str) {
         try {
             const oldKey = window.location.hostname.split('.').slice(1,3).join('').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -50,7 +50,7 @@ class SharedAuthManager {
         }
     }
 
-    // クロスドメインサポート付きでクッキーを設定
+    // Defina cookies com suporte entre domínios
     setCookie(name, value, days) {
         const d = new Date();
         d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -58,7 +58,7 @@ class SharedAuthManager {
         document.cookie = `${name}=${value};${expires};path=/;domain=${this.domain};SameSite=Strict;Secure`;
     }
 
-    // クッキーの値を取得
+    // Obter valor do cookie
     getCookie(name) {
         const nameEQ = name + "=";
         const ca = document.cookie.split(';');
@@ -70,7 +70,7 @@ class SharedAuthManager {
         return null;
     }
 
-    // 保存されているすべてのアカウントを取得
+    // Obtenha todas as contas armazenadas
     getStoredAccounts() {
         const cookieData = this.getCookie(this.cookieName);
         if (!cookieData) return {};
@@ -78,7 +78,7 @@ class SharedAuthManager {
         try {
             let rawData;
             
-            // 新しい形式（シーザー暗号）を最初に試す
+            // Seja o primeiro a experimentar um novo formato (cifra de César)
             try {
                 const deobfuscated = this.deobfuscate(cookieData);
                 if (deobfuscated) {
@@ -87,7 +87,7 @@ class SharedAuthManager {
                     throw new Error('Deobfuscation failed');
                 }
             } catch (e) {
-                // 古い形式（XOR暗号）または生のJSONにフォールバック
+                //  Retorno ao formato antigo (cifra XOR) ou JSON bruto
                 try {
                     // 古いXOR暗号を試す
                     const oldDeobfuscated = this.oldDeobfuscate(cookieData);
