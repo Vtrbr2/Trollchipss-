@@ -1,3 +1,66 @@
+// ============================================================================
+// PROXY PARA EVITAR CORS
+// ============================================================================
+const PROXY_URL = 'https://corsproxy.io/?';
+// Alternativas gratuitas:
+// - https://cors-anywhere.herokuapp.com/
+// - https://api.allorigins.win/raw?url=
+// - https://corsproxy.io/?
+
+async function fetchWithProxy(url, options = {}) {
+    const proxyUrl = PROXY_URL + encodeURIComponent(url);
+    
+    // Remove headers problemáticos para CORS
+    const safeHeaders = { ...options.headers };
+    delete safeHeaders['Origin'];
+    delete safeHeaders['Referer'];
+    
+    const response = await fetch(proxyUrl, {
+        ...options,
+        headers: safeHeaders,
+        mode: 'cors'
+    });
+    
+    return response;
+}
+
+// Modificar a classe EduspApiClient para usar o proxy:
+class EduspApiClient {
+    async request(endpoint, options = {}) {
+        const url = `${this.baseURL}${endpoint}`;
+        
+        try {
+            // Usar proxy para evitar CORS
+            const response = await fetchWithProxy(url, {
+                method: options.method || 'GET',
+                headers: options.headers || this.getDefaultHeaders(),
+                body: options.body
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            // Fallback: tentar direto (pode falhar por CORS)
+            console.warn('Proxy failed, trying direct:', error);
+            
+            const directResponse = await fetch(url, {
+                method: options.method || 'GET',
+                headers: options.headers || this.getDefaultHeaders(),
+                body: options.body
+            });
+            
+            if (!directResponse.ok) {
+                throw new Error(`HTTP ${directResponse.status}`);
+            }
+            
+            return await directResponse.json();
+        }
+    }
+}
+
 /* Taskitos - Sistema de Automação para Sala do Futuro/CMSP */
 /* Versão: 8.0 - Backend em JavaScript Puro */
 
