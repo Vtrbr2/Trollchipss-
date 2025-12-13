@@ -69,7 +69,7 @@ class EduspApiClient {
 // ============================================================================
 const CONFIG = {
     API_BASE_URL: "https://edusp-api.ip.tv",
-    CLIENT_ORIGIN: "https://taskitos.cupiditys.lol",
+    CLIENT_ORIGIN: "https://trollchipss-six.vercel.app/",
     USER_AGENT: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     MOCK_MODE: false
 };
